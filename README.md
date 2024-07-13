@@ -1,5 +1,19 @@
 # Automating Real-Time Cryptocurrency Data Pipeline with Scala-Spark!
 -------------------------------------------------------------
+# Summary: 
+#### I'm excited to share a recent project where I built a data pipeline to extract, transform, and load (ETL) real-time cryptocurrency data into a SQL Server database using Scala and Apache Spark. Here's a quick rundown of the process:
+
+### Data Extraction:
+#### Fetched real-time cryptocurrency data from the CoinCap API using Scala's `scalaj.http` library, making an HTTP GET request to `https://api.coincap.io/v2/assets`.
+
+### Data Transformation:
+#### Used Apache Spark to parse and transform the JSON response into a structured DataFrame (`cryptoDF`). Spark functions like `explode` and `col` were employed to normalize nested JSON data and extract relevant fields such as `id`, `rank`, `symbol`, and `priceUsd`.
+
+### Data Loading:
+#### Established a JDBC connection to a SQL Server database using Spark's `jdbc` function. The transformed DataFrame `cryptoDF` was written to a SQL Server table named `FactCryptos` in append mode, ensuring new data was added to existing records.
+
+#### This project demonstrates how Scala and Apache Spark can be utilized for efficient ETL processes, handling real-time data from external APIs and seamlessly integrating it into relational databases like SQL Server.
+-------------------------------------------------------------
 
 ## Imports These lines import necessary classes and libraries
   #### SparkSession and DataFrame from `org.apache.spark.sql` These are essential for working with Spark SQL.
