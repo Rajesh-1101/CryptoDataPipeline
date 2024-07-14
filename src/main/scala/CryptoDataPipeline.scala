@@ -10,6 +10,7 @@ object CryptoDataPipeline {
     val spark = SparkSession.builder()
       .appName("CryptoDataPipeline")
       .master("local[*]")
+      .config("spark.sql.shuffle.partitions", "10") // Example additional configuration
       .getOrCreate()
 
     import spark.implicits._
@@ -34,19 +35,30 @@ object CryptoDataPipeline {
 
     // Print schema and show a few rows of the DataFrame
     cryptoDF.printSchema()
-    cryptoDF.show(5, truncate = false)
+    cryptoDF.show(20, truncate = false)
 
     // Define JDBC URL and properties
-    val jdbcUrl = "jdbc:sqlserver://your_serverName;databaseName=Your_databaseName"
+    val jdbcUrl = "jdbc:sqlserver://MSSQLSERVER02:1433;databaseName=CryptoDatabase;"
     val connectionProperties = new java.util.Properties()
-    connectionProperties.put("user", "your_username")
-    connectionProperties.put("password", "your_password")
-    connectionProperties.put("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
+    connectionProperties.put("user", "crypto_user")
+    connectionProperties.put("password", "crypto@1101")
+
+//    connectionProperties.put("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
+
+    // Debugging: Print JDBC URL and connection properties
+    println(s"JDBC URL: $jdbcUrl")
+    println(s"Connection Properties: $connectionProperties")
 
     // Write DataFrame to SQL Server
-    cryptoDF.write
-      .mode("append")
-      .jdbc(jdbcUrl, "FactCryptos", connectionProperties)
+    try {
+      cryptoDF.write
+        .mode("append")
+        .jdbc(jdbcUrl, "FactCryptos", connectionProperties)
+      println("Data written to FactCryptos table successfully.")
+    } catch {
+      case e: Exception =>
+        println(s"Error writing to FactCryptos table: ${e.getMessage}")
+    }
 
     // Stop Spark session
     spark.stop()
