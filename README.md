@@ -37,10 +37,10 @@ object CryptoDataPipeline {
  ## SparkSession Initialization
  #### Initializes a SparkSession named "CryptoDataPipeline" running locally (`master("local[*]")`). This is the entry point for interacting with Spark functionalities.
 ```scala
-    // Initialize Spark session
-    val spark = SparkSession.builder()
+   val spark = SparkSession.builder()
       .appName("CryptoDataPipeline")
       .master("local[*]")
+      .config("spark.sql.shuffle.partitions", "10") // Example additional configuration
       .getOrCreate()
 ```
 
@@ -85,21 +85,21 @@ object CryptoDataPipeline {
 ```
 
 ## Schema and Data Display
-#### Prints the schema of `cryptoDF` (column names and data types) and shows the first 5 rows of `cryptoDF` without truncating column values.
+#### Prints the schema of `cryptoDF` (column names and data types) and shows the first 20 rows of `cryptoDF` without truncating column values.
 ```scala
     // Print schema and show a few rows of the DataFrame
     cryptoDF.printSchema()
-    cryptoDF.show(5, truncate = false)
+    cryptoDF.show(20, truncate = false)
 ```
 
 ## JDBC Connection Properties
 #### Defines the JDBC URL (`jdbcUrl`) for connecting to a SQL Server database (`jdbc:sqlserver://your_serverName;databaseName=Your_databaseName`). Sets up connection properties (`user`, `password`, `driver`) required for authentication and database driver.
 ```scala
     // Define JDBC URL and properties
-    val jdbcUrl = "jdbc:sqlserver://your_serverName;databaseName=Your_databaseName"
+    val jdbcUrl = "jdbc:sqlserver://MSSQLSERVER02:1433;databaseName=CryptoDatabase;"
     val connectionProperties = new java.util.Properties()
-    connectionProperties.put("user", "your_username")
-    connectionProperties.put("password", "your_password")
+    connectionProperties.put("user", "crypto_user")
+    connectionProperties.put("password", "crypto@1101")
     connectionProperties.put("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
 ```
 
@@ -108,8 +108,8 @@ object CryptoDataPipeline {
 ```scala
     // Write DataFrame to SQL Server
     cryptoDF.write
-      .mode("append")
-      .jdbc(jdbcUrl, "FactCryptos", connectionProperties)
+  .mode("append")
+  .jdbc(jdbcUrl, "FactCryptos", connectionProperties)
 ```
 
 ## SparkSession Shutdown
