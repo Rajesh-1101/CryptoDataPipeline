@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Check formatting (scalafmt)
+        run: sbt scalafmtCheckAll scalafmtSbtCheck
+
+      - name: Lint (scalafix, check only)
+        run: sbt "scalafixAll --check"
+
+      - name: Compile with fatal warnings (+ wartremover)
+        run: sbt compile Test/compile
+
+  test:
+    name: Test & coverage
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Run tests with coverage
+        run: sbt clean coverage test coverageReport
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: scoverage-report
+          path: target/scala-2.12/scoverage-report/
+
+  security:
+    name: Secret & dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks needs history
+
+      - name: Scan for committed secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Package
+    runs-on: ubuntu-latest
+    needs: [lint, test, security]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Build jar
+        run: sbt package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: target/scala-2.12/*.jar
